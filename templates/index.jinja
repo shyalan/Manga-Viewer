@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <style>
+        body{
+            background-color: black;
+            text-align: center;
+            align-content: center;
+        }
+
+        img {
+            margin-left: 10px;
+            margin-right: 10px;
+            max-width: 100%;
+        }
+
+        #nextChapter {
+            width: 100%;
+            margin-top: 10px;
+            height: 35px;
+            background-color: green;
+            border-radius: 10px;
+        }
+
+        #nextChapter:hover {
+            background-color: darkcyan;
+            cursor: pointer;
+        }
+
+    </style>
+    <h1>Select a Folder to Render Manga</h1>
+    <select id="folderSelect" onchange="loadImages()">
+        <option value="">Select a folder</option>
+        {% for folder in folders %}
+            <option value="{{ folder }}">{{ folder }}</option>
+        {% endfor %}
+    </select>
+    <div id="imageContainer"></div>
+    <button id="nextChapter" onclick="loadNextChapter()">Next Chapter</button>
+
+    <script>
+        let folders = {{ folders|tojson }};
+        let currentFolderIndex = -1;
+
+        function loadImages() {
+            const folderSelect = document.getElementById('folderSelect');
+            const folderName = folderSelect.value;
+            const imageContainer = document.getElementById('imageContainer');
+            imageContainer.innerHTML = '';
+
+            if (folderName) {
+                currentFolderIndex = folders.indexOf(folderName);
+                fetch(`/get_images/${folderName}`)
+                    .then(response => response.json())
+                    .then(images => {
+                        images.forEach(image => {
+                            const imgElement = document.createElement('img');
+                            imgElement.src = `/data/${folderName}/${image}`;
+                            imgElement.alt = image;
+                            imgElement.style.display = 'block';
+                            imgElement.style.margin = '0';
+                            imageContainer.appendChild(imgElement);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching images:', error));
+            }
+        }
+
+        function loadNextChapter() {
+            if (currentFolderIndex >= 0 && currentFolderIndex < folders.length - 1) {
+                currentFolderIndex += 1;
+                const nextFolder = folders[currentFolderIndex];
+                const folderSelect = document.getElementById('folderSelect');
+                folderSelect.value = nextFolder;
+                loadImages();
+            }
+        }
+    </script>
+</body>
+</html>
